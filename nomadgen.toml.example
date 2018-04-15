@@ -1,0 +1,61 @@
+job="prefix-p-team-mattermost"
+# metadata we use for notifications
+contact="team@example.com"
+#run in production tier
+tier="production"
+
+# a taskgroup
+[[taskgroup]]
+name="main"
+#run 
+count=4
+
+#Can be specified multiple times
+#[[taskgroup]]
+#name="main2"
+#count=1
+
+#a task in a taskgroup
+#can be specified multiple times
+[[task.main]]
+#taskname, this will be prepended with jobname
+#in this example the full name is p-team-mattermost-task1
+name="task1"
+#notify contact by sms if we have 2 or less containers running
+nagiossms="2"
+#notify contact by mail if we have 3 or less containers running
+nagiosmail="3"
+#docker image
+image="docker.io/server:latest"
+#port the container is listening on
+port=80
+#porttype can be tcp/http/script (used for checks)
+porttype="tcp"
+#resources
+cpu=1000
+memory=2000
+#allow incoming firewall for netscaler
+firewall="g/netscaler"
+
+#second task in same taskgroup (main)
+[[task.main]]
+name="task2"
+image="docker.io/redis:latest"
+#some extra arguments for this container
+args=["-json","-port 8080"]
+#we need to mount volumes
+volumes=["/net/blah:/abc"]
+#service+checks
+tags=["leader","blah"]
+port=8080
+porttype="http"
+#path the consul httpcheck will test
+checkpath="/"
+#wait 90s before executing check
+#https://www.nomadproject.io/docs/job-specification/check_restart.html
+grace="90s"
+#resources
+cpu=500
+memory=1000
+#firewall
+firewall="g/netscaler"
