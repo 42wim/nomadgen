@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rodaine/hclencoder"
+	"github.com/42wim/hclencoder"
 	"github.com/spf13/viper"
 )
 
@@ -107,10 +107,10 @@ type Config struct {
 
 type Service struct {
 	Name        string   `hcl:"name"`
+	Tags        []string `hcl:"tags" hcle:"omitempty"`
 	Port        int      `hcl:"port"`
 	AddressMode string   `hcl:"address_mode"`
 	Check       Check    `hcl:"check"`
-	Tags        []string `hcl:"tags" hcle:"omitempty"`
 }
 
 type Check struct {

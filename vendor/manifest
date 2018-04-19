@@ -2,6 +2,14 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/42wim/hclencoder",
+			"repository": "https://github.com/42wim/hclencoder",
+			"vcs": "git",
+			"revision": "4e13e35ff86f3e1479598f5d723fdc6985291b4b",
+			"branch": "single",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/armon/consul-api",
 			"repository": "https://github.com/armon/consul-api",
 			"vcs": "git",
