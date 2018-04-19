@@ -17,7 +17,9 @@ count=4
 
 #a task in a taskgroup
 #can be specified multiple times
-[[task.main]]
+[[task]]
+#taskgroup name
+taskgroup="main"
 #taskname, this will be prepended with jobname
 #in this example the full name is p-team-mattermost-task1
 name="task1"
@@ -38,7 +40,8 @@ memory=2000
 firewall="g/netscaler"
 
 #second task in same taskgroup (main)
-[[task.main]]
+[[task]]
+taskgroup="main"
 name="task2"
 image="docker.io/redis:latest"
 #some extra arguments for this container

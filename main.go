@@ -1,21 +1,19 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/hcl/hcl/printer"
-	jsonParser "github.com/hashicorp/hcl/json/parser"
+	"github.com/rodaine/hclencoder"
 	"github.com/spf13/viper"
 )
 
 // toml input
 type Ttask struct {
 	Name       string
+	Taskgroup  string
 	NagiosSms  *int
 	NagiosMail *int
 	Image      string
@@ -41,98 +39,103 @@ type Tjob struct {
 	Contact   string
 	Tier      string
 	Taskgroup []Tgroup
-	Task      map[string][]Ttask
+	Task      []Ttask
 }
 
 // Json convert structs
 type Root struct {
-	Job map[string]JobInfo `json:"job"`
+	Job []JobInfo `hcl:"job"`
 }
 
 type JobInfo struct {
-	Datacenters []string             `json:"datacenters"`
-	Meta        Meta                 `json:"meta"`
-	Constraint  []Constraint         `json:"constraint"`
-	Update      Update               `json:"update"`
-	Group       map[string]GroupInfo `json:"group"`
+	Name        string       `hcl:",key"`
+	Datacenters []string     `hcl:"datacenters"`
+	Meta        Meta         `hcl:"meta"`
+	Constraint  []Constraint `hcl:"constraint"`
+	Update      Update       `hcl:"update"`
+	Group       []GroupInfo  `hcl:"group"`
 }
 
 type Meta map[string]string
 
 type Constraint struct {
-	Attribute string `json:"attribute,omitempty"`
-	Value     string `json:"value"`
-	Operator  string `json:"operator,omitempty"`
+	Attribute        string `hcl:"attribute" hcle:"omitempty"`
+	Value            string `hcl:"value" hcle:"omitempty"`
+	Operator         string `hcl:"operator" hcle:"omitempty"`
+	DistinctHosts    bool   `hcl:"distinct_hosts" hcle:"omitempty"`
+	DistinctProperty string `hcl:"distinct_property" hcle:"omitempty"`
 }
 
 type Update struct {
-	Stagger     string `json:"stagger"`
-	MaxParallel int    `json:"max_parallel"`
+	Stagger     string `hcl:"stagger"`
+	MaxParallel int    `hcl:"max_parallel"`
 }
 
 type GroupInfo struct {
-	Count      int                 `json:"count"`
-	Constraint []Constraint        `json:"constraint"`
-	Restart    Restart             `json:"restart"`
-	Task       map[string]TaskInfo `json:"task"`
+	Name       string       `hcl:",key"`
+	Count      int          `hcl:"count"`
+	Constraint []Constraint `hcl:"constraint"`
+	Restart    Restart      `hcl:"restart"`
+	Task       []TaskInfo   `hcl:"task"`
 }
 
 type Restart struct {
-	Interval string `json:"interval"`
-	Attempts int    `json:"attempts"`
-	Delay    string `json:"delay"`
-	Mode     string `json:"mode"`
+	Interval string `hcl:"interval"`
+	Attempts int    `hcl:"attempts"`
+	Delay    string `hcl:"delay"`
+	Mode     string `hcl:"mode"`
 }
 
 type TaskInfo struct {
-	Meta      Meta              `json:"meta"`
-	Driver    string            `json:"driver"`
-	Config    Config            `json:"config"`
-	Service   Service           `json:"service"`
-	Env       map[string]string `json:"env"`
-	Resources Resources         `json:"resources"`
+	Name      string            `hcl:",key"`
+	Meta      Meta              `hcl:"meta"`
+	Driver    string            `hcl:"driver"`
+	Config    Config            `hcl:"config"`
+	Service   Service           `hcl:"service"`
+	Env       map[string]string `hcl:"env"`
+	Resources Resources         `hcl:"resources"`
 }
 
 type Config struct {
-	Image                string            `json:"image"`
-	Args                 []string          `json:"args,omitempty"`
-	AdvertiseIpv6Address bool              `json:"advertise_ipv6_address"`
-	Labels               map[string]string `json:"labels,omitempty"`
-	Volumes              []string          `json:"volumes,omitempty"`
-	Logging              map[string]string `json:"logging"`
+	AdvertiseIpv6Address bool              `hcl:"advertise_ipv6_address"`
+	Image                string            `hcl:"image"`
+	Args                 []string          `hcl:"args,omitempty"`
+	Labels               map[string]string `hcl:"labels" hcle:"omitempty"`
+	Volumes              []string          `hcl:"volumes" hcle:"omitempty"`
+	Logging              map[string]string `hcl:"logging"`
 }
 
 type Service struct {
-	Name        string   `json:"name"`
-	Port        int      `json:"port"`
-	AddressMode string   `json:"address_mode"`
-	Check       Check    `json:"check"`
-	Tags        []string `json:"tags,omitempty"`
+	Name        string   `hcl:"name"`
+	Port        int      `hcl:"port"`
+	AddressMode string   `hcl:"address_mode"`
+	Check       Check    `hcl:"check"`
+	Tags        []string `hcl:"tags" hcle:"omitempty"`
 }
 
 type Check struct {
-	Name         string       `json:"name"`
-	Port         int          `json:"port"`
-	AddressMode  string       `json:"address_mode"`
-	Type         string       `json:"type"`
-	Path         string       `json:"path,omitempty"`
-	Interval     string       `json:"interval"`
-	Timeout      string       `json:"timeout"`
-	CheckRestart CheckRestart `json:"check_restart,omitempty"`
+	Name         string       `hcl:"name"`
+	Port         int          `hcl:"port"`
+	AddressMode  string       `hcl:"address_mode"`
+	Type         string       `hcl:"type"`
+	Path         string       `hcl:"path" hcle:"omitempty"`
+	Interval     string       `hcl:"interval"`
+	Timeout      string       `hcl:"timeout"`
+	CheckRestart CheckRestart `hcl:"check_restart" hcle:"omitempty"`
 }
 
 type CheckRestart struct {
-	Grace string `json:"grace,omitempty"`
+	Grace string `hcl:"grace" hcle:"omitempty"`
 }
 
 type Resources struct {
-	Memory  int     `json:"memory"`
-	CPU     int     `json:"cpu"`
-	Network Network `json:"network"`
+	Memory  int     `hcl:"memory"`
+	CPU     int     `hcl:"cpu"`
+	Network Network `hcl:"network"`
 }
 
 type Network struct {
-	Mbits int `json:"mbits"`
+	Mbits int `hcl:"mbits"`
 }
 
 func main() {
@@ -198,61 +201,63 @@ func getDistinctDatacenter(tg *Tgroup) string {
 	return strconv.Itoa(distinct)
 }
 
-func getTaskForGroup(tj *Tjob, taskgroupName string) map[string]TaskInfo {
-	ti := make(map[string]TaskInfo)
-	for _, task := range tj.Task[taskgroupName] {
-		ti[tj.Job+"-"+task.Name] = TaskInfo{
-			Meta:   getTaskMeta(task),
-			Driver: "docker",
-			Config: Config{
-				AdvertiseIpv6Address: true,
-				Image:                task.Image,
-				Args:                 task.Args,
-				Volumes:              task.Volumes,
-				Logging:              map[string]string{"type": "journald"},
-			},
-			Service: Service{
-				Name:        tj.Job + "-" + task.Name,
-				Port:        task.Port,
-				Tags:        task.Tags,
-				AddressMode: "driver",
-				Check: Check{
-					Name:        tj.Job + "-" + task.Name + "-check",
+func getTaskForGroup(tj *Tjob, taskgroupName string) []TaskInfo {
+	ti := []TaskInfo{}
+	for _, task := range tj.Task {
+		if task.Taskgroup == taskgroupName {
+			ti = append(ti, TaskInfo{
+				Name:   tj.Job + "-" + task.Name,
+				Meta:   getTaskMeta(task),
+				Driver: "docker",
+				Config: Config{
+					AdvertiseIpv6Address: true,
+					Image:                task.Image,
+					Args:                 task.Args,
+					Volumes:              task.Volumes,
+					Logging:              map[string]string{"type": "journald"},
+				},
+				Service: Service{
+					Name:        tj.Job + "-" + task.Name,
 					Port:        task.Port,
+					Tags:        task.Tags,
 					AddressMode: "driver",
-					Type:        task.Porttype,
-					Path:        task.CheckPath,
-					Interval:    "20s",
-					Timeout:     "10s",
-					CheckRestart: CheckRestart{
-						Grace: task.Grace,
+					Check: Check{
+						Name:        tj.Job + "-" + task.Name + "-check",
+						Port:        task.Port,
+						AddressMode: "driver",
+						Type:        task.Porttype,
+						Path:        task.CheckPath,
+						Interval:    "20s",
+						Timeout:     "10s",
+						CheckRestart: CheckRestart{
+							Grace: task.Grace,
+						},
 					},
 				},
-			},
-			Env: getFirewall(task),
-			Resources: Resources{
-				Memory: task.Memory,
-				CPU:    task.CPU,
-				Network: Network{
-					Mbits: 1,
+				Env: getFirewall(task),
+				Resources: Resources{
+					Memory: task.Memory,
+					CPU:    task.CPU,
+					Network: Network{
+						Mbits: 1,
+					},
 				},
-			},
+			})
 		}
 	}
 	return ti
 }
 
-func getGroupForJob(tj *Tjob) map[string]GroupInfo {
-	gi := make(map[string]GroupInfo)
+func getGroupForJob(tj *Tjob) []GroupInfo {
+	gi := []GroupInfo{}
 	for _, tg := range tj.Taskgroup {
-		gi[tg.Name] = GroupInfo{
+		gi = append(gi, GroupInfo{
+			Name:  tj.Job + "-" + tg.Name,
 			Count: tg.Count,
 			Constraint: []Constraint{
-				{Operator: "distinct_hosts",
-					Value: "true"},
-				{Operator: "distinct_property",
-					Attribute: "${meta.datacenter}",
-					Value:     getDistinctDatacenter(&tg)},
+				{DistinctHosts: true},
+				{DistinctProperty: "${meta.datacenter}",
+					Value: getDistinctDatacenter(&tg)},
 			},
 			Restart: Restart{
 				Interval: "1m",
@@ -261,14 +266,15 @@ func getGroupForJob(tj *Tjob) map[string]GroupInfo {
 				Mode:     "delay",
 			},
 			Task: getTaskForGroup(tj, tg.Name),
-		}
+		})
 	}
 	return gi
 }
 
 func convertTomlToHcl(tj *Tjob) string {
-	ji := make(map[string]JobInfo)
-	ji[tj.Job] = JobInfo{
+	ji := []JobInfo{}
+	ji = append(ji, JobInfo{
+		Name:        tj.Job,
 		Datacenters: []string{datacenter},
 		Meta:        Meta{"contact": tj.Contact},
 		Constraint: []Constraint{
@@ -282,29 +288,15 @@ func convertTomlToHcl(tj *Tjob) string {
 			MaxParallel: 1,
 		},
 		Group: getGroupForJob(tj),
-	}
+	})
 	root := Root{ji}
 
-	res, _ := json.Marshal(&root)
-	ast, _ := jsonParser.Parse(res)
-	buf := new(bytes.Buffer)
-	printer.Fprint(buf, ast)
-
-	// beautify the output
-	lines := strings.Split(buf.String(), "\n")
-	newlines := ""
-	for _, line := range lines {
-		if line != "" {
-			newlines += line + "\n"
-		}
-	}
-	res, _ = printer.Format([]byte(newlines))
+	res, _ := hclencoder.Encode(root)
 	return string(res)
 }
 
 func readconfig() {
 	viper.SetConfigName("nomadgen")
-	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
