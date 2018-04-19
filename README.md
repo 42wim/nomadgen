@@ -17,7 +17,8 @@ tier="production"
 name="main"
 count=4
 
-[[task.main]]
+[[task]]
+taskgroup="main"
 name="task1"
 nagiossms="2"
 nagiosmail="3"
@@ -28,7 +29,8 @@ cpu=1000
 memory=2000
 firewall="g/netscaler"
 
-[[task.main]]
+[[task]]
+taskgroup="main"
 name="task2"
 image="docker.io/redis:latest"
 args=["-json","-port 8080"]
