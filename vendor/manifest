@@ -137,6 +137,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/rodaine/hclencoder",
+			"repository": "https://github.com/rodaine/hclencoder",
+			"vcs": "git",
+			"revision": "4ac4862e44e72392300715f4da373ba6a59233da",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/spf13/afero",
 			"repository": "https://github.com/spf13/afero",
 			"vcs": "git",
