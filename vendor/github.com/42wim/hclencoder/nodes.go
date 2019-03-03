@@ -88,6 +88,15 @@ func encode(in reflect.Value) (node ast.Node, key *ast.ObjectKey, err error) {
 
 }
 
+// encode converts a reflected valued into an HCL ast.Node in a depth-first manner.
+func encodePrimitiveLiteral(in reflect.Value) (node ast.Node, key *ast.ObjectKey, err error) {
+	tkn := token.Token{
+		Type: token.STRING,
+		Text: fmt.Sprintf(`%s`, in.String()),
+	}
+	return &ast.LiteralType{Token: tkn}, nil, nil
+}
+
 // encodePrimitive converts a primitive value into an ast.LiteralType. An
 // ast.ObjectKey is never returned.
 func encodePrimitive(in reflect.Value) (ast.Node, *ast.ObjectKey, error) {
@@ -303,6 +312,13 @@ func tokenize(in reflect.Value, ident bool) (t token.Token, err error) {
 		}, nil
 
 	case reflect.String:
+		// heredoc
+		if strings.HasPrefix(in.String(), "<<") {
+			return token.Token{
+				Type: token.STRING,
+				Text: fmt.Sprintf(`%s`, in.String()),
+			}, nil
+		}
 		if ident {
 			return token.Token{
 				Type: token.IDENT,
